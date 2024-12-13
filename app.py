@@ -131,5 +131,12 @@ def criar_conta():
     
     return render_template('criar_conta.html')
 
+@app.route('/fazer_deposito', methods=['GET', 'POST'])
+def fazer_deposito():
+    return render_template('criar_conta.html')
+@app.route('/fazer_transferencia', methods=['GET', 'POST'])
+def fazer_transferencia():
+    return render_template('criar_conta.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

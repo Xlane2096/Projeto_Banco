@@ -34,3 +34,24 @@ create table depositos (
     data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_conta_deposito) REFERENCES contas(id_conta)
 );
+
+
+CREATE TRIGGER deposito_atualizarsaldo after INSERT On depositos
+For each row
+begin
+	UPDATE contas
+	Set saldo.contas = saldo.contas + New.montante
+	where id_conta.contas = New.id_conta_deposito;
+END$$
+ 
+CREATE trigger transacoes_atualizarsaldo after insert on transacoes
+for each row
+begin
+	UPdate contas
+	Set saldo.contas = saldo.contas + new.valor
+    where id_conta.contas = new.id_conta_destino;
+    update contas
+    set saldo.contas = saldo.contas - new.valor
+    where id_conta.contas = new.id_conta_origem;
+End$$;
+ 

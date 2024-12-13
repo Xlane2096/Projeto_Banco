@@ -130,9 +130,46 @@ def criar_conta():
     
     return render_template('criar_conta.html')
 
-@app.route('/fazer_deposito', methods=['GET', 'POST'])
-def fazer_deposito():
-    return render_template('criar_conta.html')
+@app.route('/deposito', methods=['GET', 'POST'])
+@login_required
+def deposito():
+    if request.method == 'POST':
+        montante = request.form['montante']
+        id_conta = request.form['id_conta_deposito']  
+
+        try:
+            montante = float(montante)
+            if montante <= 0:
+                flash("O montante deve ser maior que zero!", "danger")
+                return redirect(url_for('deposito'))
+        except ValueError:
+            flash("Por favor, insira um valor válido para o montante.", "danger")
+            return redirect(url_for('deposito'))
+
+        cursor = mysql.connection.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO depositos (id_conta_deposito, montante) VALUES (%s, %s)", 
+                (id_conta, montante)
+            )
+            mysql.connection.commit()
+
+            cursor.execute(
+                "UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", 
+                (montante, id_conta)
+            )
+            mysql.connection.commit()
+
+            flash(f"Depósito de R${montante:.2f} realizado com sucesso!", "success")
+        except Exception as e:
+            flash(f"Erro ao realizar o depósito: {str(e)}", "danger")
+        finally:
+            cursor.close()
+
+        return redirect(url_for('deposito'))  
+
+    return render_template('deposito.html')  
+
 @app.route('/fazer_transferencia', methods=['GET', 'POST'])
 def fazer_transferencia():
     return render_template('criar_conta.html')

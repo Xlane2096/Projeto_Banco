@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`cliente` (
   `nome` VARCHAR(45) NOT NULL,
   `nif` INT NOT NULL,
   `iban` INT NOT NULL,
-  `país` VARCHAR(10) NULL DEFAULT NULL,
+  `país` VARCHAR(10) NOT NULL DEFAULT NULL,
   PRIMARY KEY (`idcliente`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;

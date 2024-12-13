@@ -71,7 +71,6 @@ def logout():
     flash("Você saiu com sucesso.", "success")
     return redirect(url_for('login')) 
 
-
 @app.route('/criar_usuario', methods=['GET', 'POST'])
 def criar_usuario():
     if request.method == 'POST':
@@ -79,18 +78,17 @@ def criar_usuario():
         email = request.form['email']
         senha = request.form['senha']
 
-        
         hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
 
         cursor = mysql.connection.cursor()
         try:
-            
             cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)", (nome, email, hashed_password))
             mysql.connection.commit()
 
             id_usuario = cursor.lastrowid
-            
-            cursor.execute("INSERT INTO contas (id_usuario, saldo) VALUES (%s, %s)", (id_usuario, 0.0))
+
+            nome_conta = f"Conta {nome}" 
+            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)", (id_usuario, nome_conta, 0.00))
             mysql.connection.commit()
 
             flash("Usuário e conta criados com sucesso!", "success")
@@ -98,10 +96,10 @@ def criar_usuario():
             flash(f"Erro ao criar usuário e conta: {str(e)}", "danger")
         finally:
             cursor.close()
-        
         return redirect(url_for('login'))
-    
+
     return render_template('criar_usuario.html')
+
 
 @app.route('/criar_conta', methods=['GET', 'POST'])
 @login_required

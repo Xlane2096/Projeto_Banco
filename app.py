@@ -71,6 +71,7 @@ def logout():
     flash("Você saiu com sucesso.", "success")
     return redirect(url_for('login')) 
 
+
 @app.route('/criar_usuario', methods=['GET', 'POST'])
 def criar_usuario():
     if request.method == 'POST':

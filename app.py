@@ -34,7 +34,7 @@ def load_user(user_id):
         return User(user_data[0], user_data[1], user_data[2])
     return None
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -56,7 +56,7 @@ def login():
     
     return render_template('login.html')
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
     if request.method == 'POST':
@@ -87,9 +87,7 @@ def criar_usuario():
             cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)", (nome, email, hashed_password))
             mysql.connection.commit()
 
-           
             id_usuario = cursor.lastrowid
-
             
             cursor.execute("INSERT INTO contas (id_usuario, saldo) VALUES (%s, %s)", (id_usuario, 0.0))
             mysql.connection.commit()
@@ -104,6 +102,34 @@ def criar_usuario():
     
     return render_template('criar_usuario.html')
 
+@app.route('/criar_conta', methods=['GET', 'POST'])
+@login_required
+def criar_conta():
+    if request.method == 'POST':
+        nome_conta = request.form.get('nome')  
+        montante = request.form.get('montante')  
+        try:
+            montante = float(montante)
+        except ValueError:
+            flash("Valor inválido para o montante.", "danger")
+            return redirect(url_for('criar_conta'))
+
+        cursor = mysql.connection.cursor()
+        try:
+            cursor.execute(
+                "INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)",
+                (current_user.id, nome_conta, montante)
+            )
+            mysql.connection.commit()
+            flash("Conta criada com sucesso!", "success")
+        except Exception as e:
+            flash(f"Erro ao criar conta: {str(e)}", "danger")
+        finally:
+            cursor.close()
+
+        return redirect(url_for('index'))
+    
+    return render_template('criar_conta.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

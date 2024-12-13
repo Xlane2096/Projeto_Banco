@@ -3,13 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Bancário</title>
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .accounts, .transactions, .actions {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
+<<<<<<< HEAD
     <h1>Bem-vindo ao Sistema Bancário</h1>
     <form action="{{ url_for('logout') }}" method="POST">
         <button type="submit">Sair</button>
     </form>
     <p>Quer criar mais uma conta? <a href="{{ url_for('criar_conta') }}">Criar Conta</a></p>
+=======
+    <div class="container">
+        <h1>Bem-vindo, {{ user_name }}</h1>
+
+        <!-- Accounts Section -->
+        <div class="accounts">
+            <h2>Suas Contas</h2>
+            <ul>
+                {% for account in user_accounts %}
+                <li>
+                    <strong>{{ account.name }}</strong>: R$ {{ account.balance }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Transaction History Section -->
+        <div class="transactions">
+            <h2>Histórico de Transações</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.description }}</td>
+                        <td>R$ {{ transaction.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="actions">
+            <h2>Ações</h2>
+            <form action="{{ url_for('fazer_deposito') }}" method="GET" style="display: inline;">
+                <button type="submit">Fazer Depósito</button>
+            </form>
+            <form action="{{ url_for('fazer_transferencia') }}" method="GET" style="display: inline;">
+                <button type="submit">Fazer Transferência</button>
+            </form>
+        </div>
+    </div>
+>>>>>>> ffb17a53ff0049be8b9c9f6e72aee4150701a989
 </body>
 </html>

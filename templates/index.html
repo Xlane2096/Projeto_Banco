@@ -47,13 +47,10 @@
     </style>
 </head>
 <body>
-<<<<<<< HEAD
     <h1>Bem-vindo ao Sistema Bancário</h1>
     <form action="{{ url_for('logout') }}" method="POST">
         <button type="submit">Sair</button>
     </form>
-    <p>Quer criar mais uma conta? <a href="{{ url_for('criar_conta') }}">Criar Conta</a></p>
-=======
     <div class="container">
         <h1>Bem-vindo, {{ user_name }}</h1>
 
@@ -101,8 +98,10 @@
             <form action="{{ url_for('fazer_transferencia') }}" method="GET" style="display: inline;">
                 <button type="submit">Fazer Transferência</button>
             </form>
+            <form action="{{ url_for('criar_conta') }}" method="GET" style="display: inline;">
+                <button type="submit">Criar Conta</button>
+            </form>
         </div>
     </div>
->>>>>>> ffb17a53ff0049be8b9c9f6e72aee4150701a989
 </body>
 </html>

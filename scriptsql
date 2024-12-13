@@ -9,12 +9,12 @@ CREATE TABLE usuarios (
     senha VARCHAR(255),
     nif VARCHAR(9)
 );
- 
 CREATE TABLE contas (
     id_conta INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT,
-    saldo DECIMAL(10,2) DEFAULT 0.00,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
+    nome_conta VARCHAR(255) NOT NULL,  
+    saldo DECIMAL(10,2) DEFAULT 0.00,  
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)  
 );
  
 CREATE TABLE transacoes (

@@ -133,10 +133,24 @@ def criar_conta():
 @app.route('/deposito', methods=['GET', 'POST'])
 @login_required
 def deposito():
+    # Buscando as contas do usuário logado no banco de dados
+    cursor = mysql.connection.cursor()
+    try:
+        # Seleciona as contas associadas ao usuário logado
+        cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
+        contas = cursor.fetchall()  # Recupera todas as contas do usuário
+    except Exception as e:
+        flash(f"Erro ao carregar as contas: {str(e)}", "danger")
+        contas = []  # Se ocorrer um erro, passamos uma lista vazia de contas
+    finally:
+        cursor.close()
+
+    # Quando o formulário for enviado (POST)
     if request.method == 'POST':
         montante = request.form['montante']
-        id_conta = request.form['id_conta_deposito']  
+        id_conta = request.form['id_conta_deposito']
 
+        # Verificando se o valor do depósito é válido
         try:
             montante = float(montante)
             if montante <= 0:
@@ -148,12 +162,14 @@ def deposito():
 
         cursor = mysql.connection.cursor()
         try:
+            # Inserir o depósito na tabela de depositos
             cursor.execute(
                 "INSERT INTO depositos (id_conta_deposito, montante) VALUES (%s, %s)", 
                 (id_conta, montante)
             )
             mysql.connection.commit()
 
+            # Atualizar o saldo da conta com o valor do depósito
             cursor.execute(
                 "UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", 
                 (montante, id_conta)
@@ -166,9 +182,11 @@ def deposito():
         finally:
             cursor.close()
 
-        return redirect(url_for('deposito'))  
+        return redirect(url_for('deposito'))  # Redireciona de volta para a página de depósito
 
-    return render_template('deposito.html')  
+    # Renderizar a página com as contas
+    return render_template('deposito.html', contas=contas)
+
 
 @app.route('/fazer_transferencia', methods=['GET', 'POST'])
 def fazer_transferencia():

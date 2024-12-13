@@ -7,17 +7,7 @@
 </head>
 <body>
     <h1>Realizar Depósito</h1>
-    
-    <!-- Exibir mensagens de flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul>
-            {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+
 
     <!-- Formulário de Depósito -->
     <form action="{{ url_for('deposito') }}" method="POST">
@@ -25,10 +15,10 @@
         <select id="conta" name="id_conta_deposito" required>
             <option value="" disabled selected>Escolha uma conta</option>
             {% for conta in contas %}
-                <option value="{{ conta.id_conta }}">{{ conta.nome_conta }}</option>
+                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
             {% endfor %}
         </select><br><br>
-
+        
         <label for="amount">Valor do Depósito:</label>
         <input type="number" id="amount" name="montante" step="0.01" min="0" placeholder="Ex: 100.00" required><br><br>
 

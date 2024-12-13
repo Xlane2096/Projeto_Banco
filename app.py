@@ -8,7 +8,7 @@ app.secret_key = "secreta"
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''  # Substituir
+app.config['MYSQL_PASSWORD'] = 'Noelia18.A' 
 app.config['MYSQL_DB'] = 'banco_flask'
 
 mysql = MySQL(app)
@@ -78,18 +78,30 @@ def criar_usuario():
         email = request.form['email']
         senha = request.form['senha']
 
+        
         hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
 
         cursor = mysql.connection.cursor()
         try:
+            
             cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)", (nome, email, hashed_password))
             mysql.connection.commit()
-            flash("Usuário criado com sucesso!", "success")
+
+           
+            id_usuario = cursor.lastrowid
+
+            
+            cursor.execute("INSERT INTO contas (id_usuario, saldo) VALUES (%s, %s)", (id_usuario, 0.0))
+            mysql.connection.commit()
+
+            flash("Usuário e conta criados com sucesso!", "success")
         except Exception as e:
-            flash(f"Erro ao criar usuário: {str(e)}", "danger")
+            flash(f"Erro ao criar usuário e conta: {str(e)}", "danger")
         finally:
             cursor.close()
-        return redirect(url_for('login'))  
+        
+        return redirect(url_for('login'))
+    
     return render_template('criar_usuario.html')
 
 

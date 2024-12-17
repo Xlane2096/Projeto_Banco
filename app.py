@@ -9,21 +9,20 @@ app.secret_key = "secreta"
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Noelia18.A' 
+app.config['MYSQL_PASSWORD'] = 'Noelia18.A'
 app.config['MYSQL_DB'] = 'banco_flask'
 
 mysql = MySQL(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login' 
+login_manager.login_view = 'login'
 
 class User(UserMixin):
     def __init__(self, id, nome, email):
         self.id = id
         self.nome = nome
         self.email = email
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -36,8 +35,8 @@ def load_user(user_id):
     return None
 
 def gerar_iban():
-    codigo_pais = "PT"  
-    numero_conta = ''.join([str(random.randint(0, 9)) for _ in range(19)]) 
+    codigo_pais = "PT"  # Código de país para Portugal
+    numero_conta = ''.join([str(random.randint(0, 9)) for _ in range(19)])  # Geração de número aleatório de 19 dígitos
     return f"{codigo_pais}{numero_conta}"
 
 @app.route('/', methods=['GET', 'POST'])
@@ -65,18 +64,41 @@ def login():
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    if request.method == 'POST':
-        return redirect(url_for('logout'))
-    return render_template('index.html')
+    user_id = current_user.id  # Usando current_user do flask_login
+    cursor = mysql.connection.cursor()
 
-@app.route('/logout')
+    # Buscar as contas do usuário
+    cursor.execute("""
+        SELECT id_conta, nome_conta, iban, saldo
+        FROM contas 
+        WHERE id_usuario = %s
+    """, (user_id,))
+    contas = cursor.fetchall()
+
+    # Buscar o histórico de transações
+    cursor.execute("""
+    SELECT t.data, t.valor 
+    FROM transacoes t
+    JOIN contas c_origem ON t.id_conta_origem = c_origem.id_conta
+    JOIN contas c_destino ON t.id_conta_destino = c_destino.id_conta
+    WHERE c_origem.id_usuario = %s OR c_destino.id_usuario = %s
+    ORDER BY t.data DESC
+    """, (user_id, user_id))
+    transacoes = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template('index.html', 
+                           user_name=current_user.nome,
+                           user_accounts=contas, 
+                           transactions=transacoes)
+
+# Rota de logout
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    session.pop('user_id', None) 
-    flash("Você saiu com sucesso.", "success")
-    return redirect(url_for('login')) 
-
+    return redirect(url_for('login'))
 
 @app.route('/criar_usuario', methods=['GET', 'POST'])
 def criar_usuario():
@@ -214,20 +236,19 @@ def fazer_transferencia():
             cursor.close()
 
             flash("Transferência realizada com sucesso!", "success")
-            return redirect(url_for('index'))
+            return redirect(url_for('index'))  # Redireciona para a página principal após a transferência bem-sucedida
 
         except ValueError:
             flash("Valor inválido para a transferência.", "danger")
-            return redirect(url_for('fazer_transferencia'))
+            return redirect(url_for('fazer_transferencia'))  # Se houver erro com o valor
 
-    # Carregar as contas do usuário logado
+    # Carregar as contas do usuário logado para exibir no formulário
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
     contas = cursor.fetchall()
     cursor.close()
 
-    return render_template('transacao.html', contas=contas)
-
+    return render_template('transacao.html', contas=contas)  # Exibe o formulário de transferência com as contas do usuário
 
 
 @app.route('/deposito', methods=['GET', 'POST'])
@@ -239,7 +260,7 @@ def deposito():
         contas = cursor.fetchall()  
     except Exception as e:
         flash(f"Erro ao carregar as contas: {str(e)}", "danger")
-        contas = []  
+        contas = []  # Caso haja erro ao carregar contas
     finally:
         cursor.close()
 
@@ -258,12 +279,14 @@ def deposito():
 
         cursor = mysql.connection.cursor()
         try:
+            # Inserir o depósito na tabela de depósitos
             cursor.execute(
                 "INSERT INTO depositos (id_conta_deposito, montante) VALUES (%s, %s)", 
                 (id_conta, montante)
             )
             mysql.connection.commit()
 
+            # Atualizar o saldo da conta
             cursor.execute(
                 "UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", 
                 (montante, id_conta)
@@ -276,8 +299,10 @@ def deposito():
         finally:
             cursor.close()
 
-        return redirect(url_for('deposito'))  
-    return render_template('deposito.html', contas=contas)
+        return redirect(url_for('deposito'))  # Redireciona para a página de depósito após a operação bem-sucedida
+
+    return render_template('deposito.html', contas=contas)  # Exibe o formulário de depósito com as contas do usuário
+
 
 if __name__ == '__main__':
     app.run(debug=True)

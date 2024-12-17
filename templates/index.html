@@ -1,57 +1,126 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Painel de Usuário</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
+
         .container {
-            max-width: 800px;
-            margin: auto;
+            background-color: #fff;
+            width: 80%;
+            max-width: 1200px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
+            font-size: 2.5em;
             color: #333;
+            text-align: center;
+            margin-bottom: 20px;
         }
+
         .accounts, .transactions, .actions {
-            margin: 20px 0;
+            margin-bottom: 30px;
         }
-        table {
+
+        h2 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .accounts ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .accounts li {
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .transactions table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
+
+        .transactions th, .transactions td {
             padding: 10px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
-        th {
-            background-color: #f4f4f4;
+
+        .transactions th {
+            background-color: #f1f1f1;
+            color: #333;
         }
-        button {
-            padding: 10px 15px;
-            background-color: #007BFF;
+
+        .actions form {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .actions button {
+            background-color: #007bff;
             color: white;
             border: none;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
-        button:hover {
+
+        .actions button:hover {
             background-color: #0056b3;
+        }
+
+        .logout-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            transition: background-color 0.3s;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
-    <h1>Bem-vindo ao Sistema Bancário</h1>
-    <form action="{{ url_for('logout') }}" method="POST">
-        <button type="submit">Sair</button>
-    </form>
     <div class="container">
+        <form action="{{ url_for('logout') }}" method="POST">
+            <button type="submit" class="logout-button">Sair</button>
+        </form>
+
         <h1>Bem-vindo, {{ user_name }}</h1>
 
         <!-- Accounts Section -->
@@ -60,7 +129,9 @@
             <ul>
                 {% for account in user_accounts %}
                 <li>
-                    <strong>{{ account.name }}</strong>: R$ {{ account.balance }}
+                    <strong>{{ account[1] }}</strong>  <!-- Exibe o nome da conta -->
+                    <span>IBAN: {{ account[2] }}</span>            <!-- Exibe o IBAN da conta -->
+                    <span>Saldo: € {{ account[3] }}</span>        <!-- Exibe o saldo da conta -->
                 </li>
                 {% endfor %}
             </ul>
@@ -69,36 +140,38 @@
         <!-- Transaction History Section -->
         <div class="transactions">
             <h2>Histórico de Transações</h2>
+            {% if transactions %}
             <table>
                 <thead>
                     <tr>
                         <th>Data</th>
-                        <th>Descrição</th>
                         <th>Valor</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for transaction in transactions %}
                     <tr>
-                        <td>{{ transaction.date }}</td>
-                        <td>{{ transaction.description }}</td>
-                        <td>R$ {{ transaction.amount }}</td>
+                        <td>{{ transaction[0] }}</td> <!-- Exibe a data -->
+                        <td>€ {{ transaction[1] }}</td> <!-- Exibe o valor -->
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <p>Você ainda não realizou nenhuma transação.</p>
+            {% endif %}
         </div>
 
         <!-- Actions Section -->
         <div class="actions">
             <h2>Ações</h2>
-            <form action="{{ url_for('deposito') }}" method="GET" style="display: inline;">
+            <form action="{{ url_for('deposito') }}" method="GET">
                 <button type="submit">Fazer Depósito</button>
             </form>
-            <form action="{{ url_for('fazer_transferencia') }}" method="GET" style="display: inline;">
+            <form action="{{ url_for('fazer_transferencia') }}" method="GET">
                 <button type="submit">Fazer Transferência</button>
             </form>
-            <form action="{{ url_for('criar_conta') }}" method="GET" style="display: inline;">
+            <form action="{{ url_for('criar_conta') }}" method="GET">
                 <button type="submit">Criar Conta</button>
             </form>
         </div>

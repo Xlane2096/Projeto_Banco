@@ -131,7 +131,7 @@ def criar_usuario():
             id_usuario = cursor.lastrowid
 
             # Criar uma conta com saldo inicial 0.00 e o IBAN gerado
-            nome_conta = f"Conta {nome}"
+            nome_conta = f"Conta à ordem {nome}"
             cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo, iban) VALUES (%s, %s, %s, %s)", (id_usuario, nome_conta, 0.00, iban))
             mysql.connection.commit()
 
@@ -299,7 +299,7 @@ def deposito():
         finally:
             cursor.close()
 
-        return redirect(url_for('deposito'))  # Redireciona para a página de depósito após a operação bem-sucedida
+        return redirect(url_for('index'))  # Redireciona para a página de depósito após a operação bem-sucedida
 
     return render_template('deposito.html', contas=contas)  # Exibe o formulário de depósito com as contas do usuário
 

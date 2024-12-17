@@ -26,6 +26,11 @@
             width: 100%;
             padding: 10px;
         }
+        .btn-secondary {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -54,6 +59,10 @@
 
         <!-- Botão de Submissão -->
         <button type="submit" class="btn btn-primary">Confirmar Depósito</button>
+    </form>
+
+    <form action="{{ url_for('index') }}" method="GET">
+        <button type="submit" class="btn btn-secondary">Voltar para a Página Inicial</button>
     </form>
 </div>
 

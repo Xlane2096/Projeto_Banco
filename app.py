@@ -293,7 +293,7 @@ def deposito():
             )
             mysql.connection.commit()
 
-            flash(f"Depósito de R${montante:.2f} realizado com sucesso!", "success")
+            flash(f"Depósito de {montante:.2f} realizado com sucesso!", "success")
         except Exception as e:
             flash(f"Erro ao realizar o depósito: {str(e)}", "danger")
         finally:

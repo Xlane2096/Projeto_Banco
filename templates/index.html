@@ -64,8 +64,8 @@
         }
 
         .transactions {
-            max-height: 300px; /* Limita a altura da seção de transações */
-            overflow-y: auto; /* Adiciona rolagem vertical */
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .transactions table {
@@ -85,9 +85,16 @@
             color: #333;
         }
 
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        /* Left action buttons */
         .actions form {
             display: inline-block;
-            margin-right: 15px;
         }
 
         .actions button {
@@ -99,106 +106,31 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 0 10px;
         }
 
         .actions button:hover {
             background-color: #0056b3;
         }
 
-        .logout-button {
+        /* Logout button with a specific class to ensure it's red */
+        .actions .logout-button {
             background-color: #dc3545;
             color: white;
-            border: none;
             padding: 10px 20px;
             font-size: 1.1em;
             border-radius: 5px;
             cursor: pointer;
-            margin: 20px auto;
-            display: block;
             transition: background-color 0.3s;
         }
 
-        .logout-button:hover {
+        .actions .logout-button:hover {
             background-color: #c82333;
-        }
-
-        /* Media Queries para Responsividade */
-        @media (max-width: 1200px) {
-            .container {
-                width: 90%;
-                padding: 20px;
-            }
-        }
-
-        @media (max-width: 992px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .accounts li {
-                flex-direction: column; /* Alinha verticalmente */
-                text-align: center;
-            }
-
-            .actions button {
-                font-size: 1em;
-                padding: 8px 15px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
-
-            h2 {
-                font-size: 1.3em;
-            }
-
-            .actions form {
-                display: block;
-                margin-bottom: 10px;
-            }
-
-            .actions button {
-                width: 100%;
-            }
-
-            .logout-button {
-                position: static;
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.3em;
-            }
-
-            .accounts li {
-                font-size: 0.9em;
-            }
-
-            .transactions table {
-                display: block;
-                overflow-x: auto;
-            }
-
-            .logout-button {
-                font-size: 1em;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-
         <h1>Bem-vindo, {{ user_name }}</h1>
 
         <!-- Accounts Section -->
@@ -207,9 +139,9 @@
             <ul>
                 {% for account in user_accounts %}
                 <li>
-                    <strong>{{ account[1] }}</strong> <!-- Nome da conta -->
-                    <span>IBAN: {{ account[2] }}</span> <!-- IBAN -->
-                    <span>Saldo: € {{ account[3] }}</span> <!-- Saldo -->
+                    <strong>{{ account[1] }}</strong>
+                    <span>IBAN: {{ account[2] }}</span>
+                    <span>Saldo: € {{ account[3] }}</span>
                 </li>
                 {% endfor %}
             </ul>
@@ -240,24 +172,28 @@
             {% endif %}
         </div>
 
-        <!-- Actions Section -->
+        <!-- Action Buttons Section -->
         <div class="actions">
-            <h2>Ações</h2>
-            <form action="{{ url_for('deposito') }}" method="GET">
-                <button type="submit">Fazer Depósito</button>
-            </form>
-            <form action="{{ url_for('fazer_transferencia') }}" method="GET">
-                <button type="submit">Fazer Transferência</button>
-            </form>
-            <form action="{{ url_for('criar_conta') }}" method="GET">
-                <button type="submit">Criar Conta</button>
-            </form>
-        </div>
+            <!-- Left Buttons -->
+            <div>
+                <form action="{{ url_for('deposito') }}" method="GET">
+                    <button type="submit">Fazer Depósito</button>
+                </form>
+                <form action="{{ url_for('fazer_transferencia') }}" method="GET">
+                    <button type="submit">Fazer Transferência</button>
+                </form>
+                <form action="{{ url_for('criar_conta') }}" method="GET">
+                    <button type="submit">Criar Conta</button>
+                </form>
+            </div>
 
-        <!-- Botão Logout -->
-        <form action="{{ url_for('logout') }}" method="POST">
-            <button type="submit" class="logout-button">Sair</button>
-        </form>
+            <!-- Logout Button (with specific class to make it red) -->
+            <div>
+                <form action="{{ url_for('logout') }}" method="POST">
+                    <button type="submit" class="logout-button">Sair</button>
+                </form>
+            </div>
+        </div>
     </div>
 </body>
 </html>

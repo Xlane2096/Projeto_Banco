@@ -1,17 +1,17 @@
 CREATE DATABASE banco_flask;
- 
 USE banco_flask;
- 
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100),
     email VARCHAR(100) UNIQUE,
     senha VARCHAR(255),
-    nif VARCHAR(9)
+    nif VARCHAR(9) unique
 );
+ 
 CREATE TABLE contas (
     id_conta INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT,
+    iban varchar(21) NOT NULL UNIQUE,
     nome_conta VARCHAR(255) NOT NULL,  
     saldo DECIMAL(10,2) DEFAULT 0.00,  
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)  
@@ -26,7 +26,7 @@ CREATE TABLE transacoes (
     FOREIGN KEY (id_conta_origem) REFERENCES contas(id_conta),
     FOREIGN KEY (id_conta_destino) REFERENCES contas(id_conta)
 );
-
+ 
 create table depositos (
     id_deposito int AUTO_INCREMENT PRIMARY KEY,
     id_conta_deposito int,
@@ -35,7 +35,8 @@ create table depositos (
     FOREIGN KEY (id_conta_deposito) REFERENCES contas(id_conta)
 );
 
-
+DELIMITER $$ 
+ 
 CREATE TRIGGER deposito_atualizarsaldo after INSERT On depositos
 For each row
 begin
@@ -54,4 +55,9 @@ begin
     set saldo.contas = saldo.contas - new.valor
     where id_conta.contas = new.id_conta_origem;
 End$$;
- 
+
+DELIMITER $$
+
+select *from usuarios;
+select *from contas;
+select *from depositos;

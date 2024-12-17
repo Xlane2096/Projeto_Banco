@@ -9,7 +9,7 @@ app.secret_key = "secreta"
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Noelia18.A'
+app.config['MYSQL_PASSWORD'] = 'test123'
 app.config['MYSQL_DB'] = 'banco_flask'
 
 mysql = MySQL(app)

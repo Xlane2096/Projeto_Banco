@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-
+import random
 app = Flask(__name__)
 app.secret_key = "secreta" 
 
@@ -77,18 +77,19 @@ def criar_usuario():
         nome = request.form['nome']
         email = request.form['email']
         senha = request.form['senha']
-
+        nif= request.form['nif']
+        iban = gerar_iban()  
         hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
 
         cursor = mysql.connection.cursor()
         try:
-            cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES (%s, %s, %s)", (nome, email, hashed_password))
+            cursor.execute("INSERT INTO usuarios (nome, email, senha, nif) VALUES (%s, %s, %s, %s)", (nome, email, hashed_password, nif))
             mysql.connection.commit()
 
             id_usuario = cursor.lastrowid
 
             nome_conta = f"Conta {nome}" 
-            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)", (id_usuario, nome_conta, 0.00))
+            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo,iban) VALUES (%s, %s, %s, %s)", (id_usuario, nome_conta, 0.00, iban))
             mysql.connection.commit()
 
             flash("Usuário e conta criados com sucesso!", "success")
@@ -100,28 +101,37 @@ def criar_usuario():
 
     return render_template('criar_usuario.html')
 
-
 @app.route('/criar_conta', methods=['GET', 'POST'])
 @login_required
 def criar_conta():
     if request.method == 'POST':
         nome_conta = request.form.get('nome')  
         montante = request.form.get('montante')  
+
+        # Validação do montante
         try:
             montante = float(montante)
         except ValueError:
             flash("Valor inválido para o montante.", "danger")
             return redirect(url_for('criar_conta'))
+        
+        # Geração automática do IBAN
+        iban = gerar_iban()
+
+        print(f"Dados recebidos: ID Usuário: {current_user.id}, Nome: {nome_conta}, Montante: {montante}, IBAN: {iban}")
 
         cursor = mysql.connection.cursor()
         try:
+            print("Executando SQL de inserção...")
             cursor.execute(
-                "INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)",
-                (current_user.id, nome_conta, montante)
+                "INSERT INTO contas (id_usuario, nome_conta, saldo, iban) VALUES (%s, %s, %s, %s)",
+                (current_user.id, nome_conta, montante, iban)
             )
             mysql.connection.commit()
-            flash("Conta criada com sucesso!", "success")
+            print("Conta criada com sucesso!")
+            flash(f"Conta criada com sucesso! IBAN: {iban}", "success")
         except Exception as e:
+            print(f"Erro ao executar SQL: {e}")
             flash(f"Erro ao criar conta: {str(e)}", "danger")
         finally:
             cursor.close()
@@ -129,6 +139,14 @@ def criar_conta():
         return redirect(url_for('index'))
     
     return render_template('criar_conta.html')
+
+def gerar_iban():
+    # Geração de IBAN simples para teste
+    codigo_pais = "PT"
+    digitos_controle = f"{random.randint(10, 99)}"
+    numero_banco_conta = ''.join([str(random.randint(0, 9)) for _ in range(21)])
+    return f"{codigo_pais}{digitos_controle}{numero_banco_conta}"
+
 
 @app.route('/deposito', methods=['GET', 'POST'])
 @login_required

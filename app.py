@@ -3,11 +3,11 @@ from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import random
+import string
 
 app = Flask(__name__)
-app.secret_key = "secreta" 
+app.secret_key = "secreta"
 
-# Configuração do MySQL
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Noelia18.A' 
@@ -15,19 +15,17 @@ app.config['MYSQL_DB'] = 'banco_flask'
 
 mysql = MySQL(app)
 
-# Configuração do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # Página de login
+login_manager.login_view = 'login' 
 
-# Classe do Usuário
 class User(UserMixin):
     def __init__(self, id, nome, email):
         self.id = id
         self.nome = nome
         self.email = email
 
-# Carregamento do usuário
+
 @login_manager.user_loader
 def load_user(user_id):
     cursor = mysql.connection.cursor()
@@ -41,11 +39,9 @@ def load_user(user_id):
 # Função para gerar IBAN aleatório
 def gerar_iban():
     codigo_pais = "PT"  # Código do país (Portugal)
-    digitos_controle = f"{random.randint(10, 99)}"  # Dígitos de controle aleatórios
-    numero_banco_conta = ''.join([str(random.randint(0, 9)) for _ in range(21)])  # Número da conta (21 dígitos)
-    return f"{codigo_pais}{digitos_controle}{numero_banco_conta}"
+    numero_conta = ''.join([str(random.randint(0, 9)) for _ in range(19)])  # 19 random digits
+    return f"{codigo_pais}{numero_conta}"
 
-# Rota de login
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -57,7 +53,7 @@ def login():
         user_data = cursor.fetchone()
         cursor.close()
 
-        if user_data and check_password_hash(user_data[3], senha):  # Verificar senha
+        if user_data and check_password_hash(user_data[3], senha):  
             user = User(user_data[0], user_data[1], user_data[2])
             login_user(user)
             session['user_id'] = user.id 
@@ -68,7 +64,6 @@ def login():
     
     return render_template('login.html')
 
-# Rota do índice após login
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
@@ -76,7 +71,6 @@ def index():
         return redirect(url_for('logout'))
     return render_template('index.html')
 
-# Rota de logout
 @app.route('/logout')
 @login_required
 def logout():
@@ -85,7 +79,7 @@ def logout():
     flash("Você saiu com sucesso.", "success")
     return redirect(url_for('login')) 
 
-# Rota para criar usuário e conta
+
 @app.route('/criar_usuario', methods=['GET', 'POST'])
 def criar_usuario():
     if request.method == 'POST':
@@ -95,13 +89,20 @@ def criar_usuario():
         nif = request.form['nif']
         
         # Gerar o IBAN para a conta do usuário
-       # iban = gerar_iban()  
-        
-        # Hash da senha do usuário
-        hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
+        iban = gerar_iban()
 
+        # Verificar se o IBAN já existe no banco de dados
         cursor = mysql.connection.cursor()
         try:
+            cursor.execute("SELECT COUNT(*) FROM contas WHERE iban = %s", (iban,))
+            result = cursor.fetchone()
+
+            if result[0] > 0:  # Se o IBAN já existir, gere um novo IBAN
+                iban = gerar_iban()
+            
+            # Hash da senha do usuário
+            hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
+
             # Inserir o usuário na tabela de usuários
             cursor.execute("INSERT INTO usuarios (nome, email, senha, nif) VALUES (%s, %s, %s, %s)", (nome, email, hashed_password, nif))
             mysql.connection.commit()
@@ -110,21 +111,21 @@ def criar_usuario():
             id_usuario = cursor.lastrowid
 
             # Criar uma conta com saldo inicial 0.00 e o IBAN gerado
-            nome_conta = f"Conta {nome}" 
-            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)", (id_usuario, nome_conta, 0.00))
+            nome_conta = f"Conta {nome}"
+            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo, iban) VALUES (%s, %s, %s, %s)", (id_usuario, nome_conta, 0.00, iban))
             mysql.connection.commit()
 
             flash("Usuário e conta criados com sucesso!", "success")
         except Exception as e:
+            mysql.connection.rollback()  # Reverta qualquer alteração feita no banco até agora
             flash(f"Erro ao criar usuário e conta: {str(e)}", "danger")
         finally:
             cursor.close()
-        
+
         return redirect(url_for('login'))
 
     return render_template('criar_usuario.html')
 
-# Rota para criar nova conta para usuário autenticado
 @app.route('/criar_conta', methods=['GET', 'POST'])
 @login_required
 def criar_conta():
@@ -160,11 +161,79 @@ def criar_conta():
     
     return render_template('criar_conta.html')
 
-# Rota para realizar depósito
+@app.route('/fazer_transferencia', methods=['GET', 'POST'])
+@login_required
+def fazer_transferencia():
+    cursor = mysql.connection.cursor()
+    try:
+        # Buscar todas as contas no banco de dados (não apenas do usuário atual)
+        cursor.execute("SELECT id_conta, nome_conta, id_usuario FROM contas")
+        contas = cursor.fetchall()
+    except Exception as e:
+        flash(f"Erro ao carregar contas: {str(e)}", "danger")
+        contas = []
+    finally:
+        cursor.close()
+
+    if request.method == 'POST':
+        conta_origem = request.form.get('conta_origem')
+        conta_destino = request.form.get('conta_destino')
+        montante = request.form.get('montante')
+
+        # Validar entrada
+        if not conta_origem or not conta_destino or not montante:
+            flash("Todos os campos são obrigatórios.", "danger")
+            return redirect(url_for('fazer_transferencia'))
+        
+        if conta_origem == conta_destino:
+            flash("A conta de origem e destino devem ser diferentes.", "danger")
+            return redirect(url_for('fazer_transferencia'))
+
+        try:
+            montante = float(montante)
+            if montante <= 0:
+                flash("O montante deve ser maior que zero.", "danger")
+                return redirect(url_for('fazer_transferencia'))
+        except ValueError:
+            flash("Insira um valor numérico válido para o montante.", "danger")
+            return redirect(url_for('fazer_transferencia'))
+
+        # Realizar a transferência
+        cursor = mysql.connection.cursor()
+        try:
+            # Verificar saldo suficiente na conta de origem
+            cursor.execute("SELECT saldo FROM contas WHERE id_conta = %s", (conta_origem,))
+            saldo_origem = cursor.fetchone()
+            if not saldo_origem or saldo_origem[0] < montante:
+                flash("Saldo insuficiente para realizar a transferência.", "danger")
+                return redirect(url_for('fazer_transferencia'))
+
+            # Deduzir da conta de origem
+            cursor.execute("UPDATE contas SET saldo = saldo - %s WHERE id_conta = %s", (montante, conta_origem))
+            # Adicionar à conta de destino
+            cursor.execute("UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", (montante, conta_destino))
+
+            # Registrar a transação
+            cursor.execute(""" 
+                INSERT INTO transacoes (id_conta_origem, id_conta_destino, valor) 
+                VALUES (%s, %s, %s)
+            """, (conta_origem, conta_destino, montante))
+
+            mysql.connection.commit()
+            flash("Transferência realizada com sucesso!", "success")
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Erro ao realizar transferência: {str(e)}", "danger")
+        finally:
+            cursor.close()
+        return redirect(url_for('fazer_transferencia'))
+
+    return render_template('transacao.html', contas=contas)
+
+
 @app.route('/deposito', methods=['GET', 'POST'])
 @login_required
 def deposito():
-    
     cursor = mysql.connection.cursor()
     try:
         cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
@@ -210,72 +279,6 @@ def deposito():
 
         return redirect(url_for('deposito'))  
     return render_template('deposito.html', contas=contas)
-
-# Rota para realizar transferência
-@app.route('/fazer_transferencia', methods=['GET', 'POST'])
-@login_required
-def fazer_transferencia():
-    cursor = mysql.connection.cursor()
-    try:
-        cursor.execute("SELECT id_conta, nome_conta, id_usuario FROM contas")
-        contas = cursor.fetchall()
-    except Exception as e:
-        flash(f"Erro ao carregar contas: {str(e)}", "danger")
-        contas = []
-    finally:
-        cursor.close()
-
-    if request.method == 'POST':
-        conta_origem = request.form.get('conta_origem')
-        conta_destino = request.form.get('conta_destino')
-        montante = request.form.get('montante')
-
-        # Validar entrada
-        if not conta_origem or not conta_destino or not montante:
-            flash("Todos os campos são obrigatórios.", "danger")
-            return redirect(url_for('fazer_transferencia'))
-        
-        if conta_origem == conta_destino:
-            flash("A conta de origem e destino devem ser diferentes.", "danger")
-            return redirect(url_for('fazer_transferencia'))
-
-        try:
-            montante = float(montante)
-            if montante <= 0:
-                flash("O montante deve ser maior que zero.", "danger")
-                return redirect(url_for('fazer_transferencia'))
-        except ValueError:
-            flash("Insira um valor numérico válido para o montante.", "danger")
-            return redirect(url_for('fazer_transferencia'))
-
-        cursor = mysql.connection.cursor()
-        try:
-            # Verificar saldo suficiente na conta de origem
-            cursor.execute("SELECT saldo FROM contas WHERE id_conta = %s", (conta_origem,))
-            saldo_origem = cursor.fetchone()
-            if not saldo_origem or saldo_origem[0] < montante:
-                flash("Saldo insuficiente para realizar a transferência.", "danger")
-                return redirect(url_for('fazer_transferencia'))
-
-            # Deduzir da conta de origem
-            cursor.execute("UPDATE contas SET saldo = saldo - %s WHERE id_conta = %s", (montante, conta_origem))
-            # Adicionar à conta de destino
-            cursor.execute("UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", (montante, conta_destino))
-
-            # Registrar a transação
-            cursor.execute("""INSERT INTO transacoes (id_conta_origem, id_conta_destino, valor) 
-                              VALUES (%s, %s, %s)""", (conta_origem, conta_destino, montante))
-
-            mysql.connection.commit()
-            flash("Transferência realizada com sucesso!", "success")
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f"Erro ao realizar transferência: {str(e)}", "danger")
-        finally:
-            cursor.close()
-        return redirect(url_for('fazer_transferencia'))
-
-    return render_template('transacao.html', contas=contas)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -57,7 +57,7 @@ def login():
             flash("Login bem-sucedido!", "success")
             return redirect(url_for('index')) 
         else:
-            flash("Usuário ou senha incorretos", "danger")
+            flash("Utilizador ou senha incorretos", "danger")
     
     return render_template('login.html')
 
@@ -67,7 +67,7 @@ def index():
     user_id = current_user.id  # Usando current_user do flask_login
     cursor = mysql.connection.cursor()
 
-    # Buscar as contas do usuário
+    # Buscar as contas do utilizador
     cursor.execute("""
         SELECT id_conta, nome_conta, iban, saldo
         FROM contas 
@@ -108,7 +108,7 @@ def criar_usuario():
         senha = request.form['senha']
         nif = request.form['nif']
         
-        # Gerar o IBAN para a conta do usuário
+        # Gerar o IBAN para a conta do utilizador
         iban = gerar_iban()
 
         # Verificar se o IBAN já existe no banco de dados
@@ -120,14 +120,14 @@ def criar_usuario():
             if result[0] > 0:  # Se o IBAN já existir, gere um novo IBAN
                 iban = gerar_iban()
             
-            # Hash da senha do usuário
+            # Hash da senha do utilizador
             hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
 
-            # Inserir o usuário na tabela de usuários
+            # Inserir o utilizador na tabela de utilizador
             cursor.execute("INSERT INTO usuarios (nome, email, senha, nif) VALUES (%s, %s, %s, %s)", (nome, email, hashed_password, nif))
             mysql.connection.commit()
 
-            # Obter o ID do usuário recém-criado
+            # Obter o ID do utilizador recém-criado
             id_usuario = cursor.lastrowid
 
             # Criar uma conta com saldo inicial 0.00 e o IBAN gerado
@@ -135,10 +135,10 @@ def criar_usuario():
             cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo, iban) VALUES (%s, %s, %s, %s)", (id_usuario, nome_conta, 0.00, iban))
             mysql.connection.commit()
 
-            flash("Usuário e conta criados com sucesso!", "success")
+            flash("Utilizador e conta criados com sucesso!", "success")
         except Exception as e:
             mysql.connection.rollback()  # Reverta qualquer alteração feita no banco até agora
-            flash(f"Erro ao criar usuário e conta: {str(e)}", "danger")
+            flash(f"Erro ao criar utilizador e conta: {str(e)}", "danger")
         finally:
             cursor.close()
 
@@ -242,7 +242,7 @@ def fazer_transferencia():
             flash("Valor inválido para a transferência.", "danger")
             return redirect(url_for('fazer_transferencia'))  # Se houver erro com o valor
 
-    # Carregar as contas do usuário logado para exibir no formulário
+    # Carregar as contas do utilizador logado para exibir no formulário
     cursor = mysql.connection.cursor()
     cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
     contas = cursor.fetchall()
@@ -301,7 +301,7 @@ def deposito():
 
         return redirect(url_for('index'))  # Redireciona para a página de depósito após a operação bem-sucedida
 
-    return render_template('deposito.html', contas=contas)  # Exibe o formulário de depósito com as contas do usuário
+    return render_template('deposito.html', contas=contas)  # Exibe o formulário de depósito com as contas do utilizador
 
 
 if __name__ == '__main__':

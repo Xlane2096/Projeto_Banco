@@ -7,22 +7,25 @@
 <body>
     <h1>Fazer Transferência</h1>
     <form method="POST">
+        
         <label for="conta_origem">Conta de Origem:</label>
         <select name="conta_origem" id="conta_origem" required>
-            <option value="">Selecione uma conta</option>
+            <option value="">Selecione a conta de origem</option>
             {% for conta in contas %}
-                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
+                <option value="{{ conta[0] }}">Conta {{ conta[0] }} - {{ conta[1] }} (Usuário {{ conta[2] }})</option>
             {% endfor %}
         </select><br><br>
 
+       
         <label for="conta_destino">Conta de Destino:</label>
         <select name="conta_destino" id="conta_destino" required>
-            <option value="">Selecione uma conta</option>
+            <option value="">Selecione a conta de destino</option>
             {% for conta in contas %}
-                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
+                <option value="{{ conta[0] }}">Conta {{ conta[0] }} - {{ conta[1] }} (Usuário {{ conta[2] }})</option>
             {% endfor %}
         </select><br><br>
 
+       
         <label for="montante">Montante:</label>
         <input type="number" step="0.01" id="montante" name="montante" required><br><br>
 

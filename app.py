@@ -186,8 +186,8 @@ def deposito():
 def fazer_transferencia():
     cursor = mysql.connection.cursor()
     try:
-        # Buscar as contas associadas ao usuário atual
-        cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
+        # Buscar todas as contas no banco de dados (não apenas do usuário atual)
+        cursor.execute("SELECT id_conta, nome_conta, id_usuario FROM contas")
         contas = cursor.fetchall()
     except Exception as e:
         flash(f"Erro ao carregar contas: {str(e)}", "danger")
@@ -203,20 +203,20 @@ def fazer_transferencia():
         # Validar entrada
         if not conta_origem or not conta_destino or not montante:
             flash("Todos os campos são obrigatórios.", "danger")
-            return redirect(url_for('transacao'))
+            return redirect(url_for('fazer_transferencia'))
         
         if conta_origem == conta_destino:
             flash("A conta de origem e destino devem ser diferentes.", "danger")
-            return redirect(url_for('transacao'))
+            return redirect(url_for('fazer_transferencia'))
 
         try:
             montante = float(montante)
             if montante <= 0:
                 flash("O montante deve ser maior que zero.", "danger")
-                return redirect(url_for('transacao'))
+                return redirect(url_for('fazer_transferencia'))
         except ValueError:
             flash("Insira um valor numérico válido para o montante.", "danger")
-            return redirect(url_for('transacao'))
+            return redirect(url_for('fazer_transferencia'))
 
         # Realizar a transferência
         cursor = mysql.connection.cursor()
@@ -226,7 +226,7 @@ def fazer_transferencia():
             saldo_origem = cursor.fetchone()
             if not saldo_origem or saldo_origem[0] < montante:
                 flash("Saldo insuficiente para realizar a transferência.", "danger")
-                return redirect(url_for('transacao'))
+                return redirect(url_for('fazer_transferencia'))
 
             # Deduzir da conta de origem
             cursor.execute("UPDATE contas SET saldo = saldo - %s WHERE id_conta = %s", (montante, conta_origem))
@@ -246,10 +246,9 @@ def fazer_transferencia():
             flash(f"Erro ao realizar transferência: {str(e)}", "danger")
         finally:
             cursor.close()
-        return redirect(url_for('transacao'))
+        return redirect(url_for('fazer_transferencia'))
 
     return render_template('transacao.html', contas=contas)
-
 
 if __name__ == '__main__':
     app.run(debug=True)

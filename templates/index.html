@@ -113,6 +113,9 @@
             font-size: 1.1em;
             border-radius: 5px;
             cursor: pointer;
+            position: relative;
+            bottom: 71px;
+            left: 430px;
             margin: 20px auto;
             display: block;
             transition: background-color 0.3s;
@@ -125,9 +128,6 @@
 </head>
 <body>
     <div class="container">
-        <form action="{{ url_for('logout') }}" method="POST">
-            <button type="submit" class="logout-button">Sair</button>
-        </form>
 
         <h1>Bem-vindo, {{ user_name }}</h1>
 
@@ -182,7 +182,11 @@
             <form action="{{ url_for('criar_conta') }}" method="GET">
                 <button type="submit">Criar Conta</button>
             </form>
+            
         </div>
+        <form action="{{ url_for('logout') }}" method="POST">
+            <button type="submit" class="logout-button">Sair</button>
+        </form>
     </div>
 </body>
 </html>

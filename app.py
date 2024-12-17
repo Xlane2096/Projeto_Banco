@@ -3,9 +3,11 @@ from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import random
+
 app = Flask(__name__)
 app.secret_key = "secreta" 
 
+# Configuração do MySQL
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'Noelia18.A' 
@@ -13,17 +15,19 @@ app.config['MYSQL_DB'] = 'banco_flask'
 
 mysql = MySQL(app)
 
+# Configuração do Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login' 
+login_manager.login_view = 'login'  # Página de login
 
+# Classe do Usuário
 class User(UserMixin):
     def __init__(self, id, nome, email):
         self.id = id
         self.nome = nome
         self.email = email
 
-
+# Carregamento do usuário
 @login_manager.user_loader
 def load_user(user_id):
     cursor = mysql.connection.cursor()
@@ -34,6 +38,14 @@ def load_user(user_id):
         return User(user_data[0], user_data[1], user_data[2])
     return None
 
+# Função para gerar IBAN aleatório
+def gerar_iban():
+    codigo_pais = "PT"  # Código do país (Portugal)
+    digitos_controle = f"{random.randint(10, 99)}"  # Dígitos de controle aleatórios
+    numero_banco_conta = ''.join([str(random.randint(0, 9)) for _ in range(21)])  # Número da conta (21 dígitos)
+    return f"{codigo_pais}{digitos_controle}{numero_banco_conta}"
+
+# Rota de login
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -45,7 +57,7 @@ def login():
         user_data = cursor.fetchone()
         cursor.close()
 
-        if user_data and check_password_hash(user_data[3], senha):  
+        if user_data and check_password_hash(user_data[3], senha):  # Verificar senha
             user = User(user_data[0], user_data[1], user_data[2])
             login_user(user)
             session['user_id'] = user.id 
@@ -56,6 +68,7 @@ def login():
     
     return render_template('login.html')
 
+# Rota do índice após login
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
@@ -63,6 +76,7 @@ def index():
         return redirect(url_for('logout'))
     return render_template('index.html')
 
+# Rota de logout
 @app.route('/logout')
 @login_required
 def logout():
@@ -71,25 +85,33 @@ def logout():
     flash("Você saiu com sucesso.", "success")
     return redirect(url_for('login')) 
 
+# Rota para criar usuário e conta
 @app.route('/criar_usuario', methods=['GET', 'POST'])
 def criar_usuario():
     if request.method == 'POST':
         nome = request.form['nome']
         email = request.form['email']
         senha = request.form['senha']
-        nif= request.form['nif']
-        iban = gerar_iban()  
+        nif = request.form['nif']
+        
+        # Gerar o IBAN para a conta do usuário
+       # iban = gerar_iban()  
+        
+        # Hash da senha do usuário
         hashed_password = generate_password_hash(senha, method='pbkdf2:sha256')
 
         cursor = mysql.connection.cursor()
         try:
+            # Inserir o usuário na tabela de usuários
             cursor.execute("INSERT INTO usuarios (nome, email, senha, nif) VALUES (%s, %s, %s, %s)", (nome, email, hashed_password, nif))
             mysql.connection.commit()
 
+            # Obter o ID do usuário recém-criado
             id_usuario = cursor.lastrowid
 
+            # Criar uma conta com saldo inicial 0.00 e o IBAN gerado
             nome_conta = f"Conta {nome}" 
-            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo,iban) VALUES (%s, %s, %s, %s)", (id_usuario, nome_conta, 0.00, iban))
+            cursor.execute("INSERT INTO contas (id_usuario, nome_conta, saldo) VALUES (%s, %s, %s)", (id_usuario, nome_conta, 0.00))
             mysql.connection.commit()
 
             flash("Usuário e conta criados com sucesso!", "success")
@@ -97,41 +119,39 @@ def criar_usuario():
             flash(f"Erro ao criar usuário e conta: {str(e)}", "danger")
         finally:
             cursor.close()
+        
         return redirect(url_for('login'))
 
     return render_template('criar_usuario.html')
 
+# Rota para criar nova conta para usuário autenticado
 @app.route('/criar_conta', methods=['GET', 'POST'])
 @login_required
 def criar_conta():
     if request.method == 'POST':
-        nome_conta = request.form.get('nome')  
-        montante = request.form.get('montante')  
+        nome_conta = request.form.get('nome')  # Nome da nova conta
+        montante = request.form.get('montante')  # Saldo inicial da nova conta
 
-        # Validação do montante
+        # Validar o valor do montante
         try:
             montante = float(montante)
         except ValueError:
             flash("Valor inválido para o montante.", "danger")
             return redirect(url_for('criar_conta'))
         
-        # Geração automática do IBAN
+        # Gerar IBAN para a nova conta
         iban = gerar_iban()
-
-        print(f"Dados recebidos: ID Usuário: {current_user.id}, Nome: {nome_conta}, Montante: {montante}, IBAN: {iban}")
 
         cursor = mysql.connection.cursor()
         try:
-            print("Executando SQL de inserção...")
+            # Inserir nova conta no banco de dados
             cursor.execute(
                 "INSERT INTO contas (id_usuario, nome_conta, saldo, iban) VALUES (%s, %s, %s, %s)",
                 (current_user.id, nome_conta, montante, iban)
             )
             mysql.connection.commit()
-            print("Conta criada com sucesso!")
             flash(f"Conta criada com sucesso! IBAN: {iban}", "success")
         except Exception as e:
-            print(f"Erro ao executar SQL: {e}")
             flash(f"Erro ao criar conta: {str(e)}", "danger")
         finally:
             cursor.close()
@@ -140,14 +160,7 @@ def criar_conta():
     
     return render_template('criar_conta.html')
 
-def gerar_iban():
-    # Geração de IBAN simples para teste
-    codigo_pais = "PT"
-    digitos_controle = f"{random.randint(10, 99)}"
-    numero_banco_conta = ''.join([str(random.randint(0, 9)) for _ in range(21)])
-    return f"{codigo_pais}{digitos_controle}{numero_banco_conta}"
-
-
+# Rota para realizar depósito
 @app.route('/deposito', methods=['GET', 'POST'])
 @login_required
 def deposito():
@@ -198,13 +211,12 @@ def deposito():
         return redirect(url_for('deposito'))  
     return render_template('deposito.html', contas=contas)
 
-
+# Rota para realizar transferência
 @app.route('/fazer_transferencia', methods=['GET', 'POST'])
 @login_required
 def fazer_transferencia():
     cursor = mysql.connection.cursor()
     try:
-        # Buscar todas as contas no banco de dados (não apenas do usuário atual)
         cursor.execute("SELECT id_conta, nome_conta, id_usuario FROM contas")
         contas = cursor.fetchall()
     except Exception as e:
@@ -236,7 +248,6 @@ def fazer_transferencia():
             flash("Insira um valor numérico válido para o montante.", "danger")
             return redirect(url_for('fazer_transferencia'))
 
-        # Realizar a transferência
         cursor = mysql.connection.cursor()
         try:
             # Verificar saldo suficiente na conta de origem
@@ -252,10 +263,8 @@ def fazer_transferencia():
             cursor.execute("UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", (montante, conta_destino))
 
             # Registrar a transação
-            cursor.execute("""
-                INSERT INTO transacoes (id_conta_origem, id_conta_destino, valor) 
-                VALUES (%s, %s, %s)
-            """, (conta_origem, conta_destino, montante))
+            cursor.execute("""INSERT INTO transacoes (id_conta_origem, id_conta_destino, valor) 
+                              VALUES (%s, %s, %s)""", (conta_origem, conta_destino, montante))
 
             mysql.connection.commit()
             flash("Transferência realizada com sucesso!", "success")

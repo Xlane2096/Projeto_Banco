@@ -133,24 +133,21 @@ def criar_conta():
 @app.route('/deposito', methods=['GET', 'POST'])
 @login_required
 def deposito():
-    # Buscando as contas do usuário logado no banco de dados
+    
     cursor = mysql.connection.cursor()
     try:
-        # Seleciona as contas associadas ao usuário logado
         cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
-        contas = cursor.fetchall()  # Recupera todas as contas do usuário
+        contas = cursor.fetchall()  
     except Exception as e:
         flash(f"Erro ao carregar as contas: {str(e)}", "danger")
-        contas = []  # Se ocorrer um erro, passamos uma lista vazia de contas
+        contas = []  
     finally:
         cursor.close()
 
-    # Quando o formulário for enviado (POST)
     if request.method == 'POST':
         montante = request.form['montante']
         id_conta = request.form['id_conta_deposito']
 
-        # Verificando se o valor do depósito é válido
         try:
             montante = float(montante)
             if montante <= 0:
@@ -162,14 +159,12 @@ def deposito():
 
         cursor = mysql.connection.cursor()
         try:
-            # Inserir o depósito na tabela de depositos
             cursor.execute(
                 "INSERT INTO depositos (id_conta_deposito, montante) VALUES (%s, %s)", 
                 (id_conta, montante)
             )
             mysql.connection.commit()
 
-            # Atualizar o saldo da conta com o valor do depósito
             cursor.execute(
                 "UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", 
                 (montante, id_conta)
@@ -182,15 +177,79 @@ def deposito():
         finally:
             cursor.close()
 
-        return redirect(url_for('deposito'))  # Redireciona de volta para a página de depósito
-
-    # Renderizar a página com as contas
+        return redirect(url_for('deposito'))  
     return render_template('deposito.html', contas=contas)
 
 
 @app.route('/fazer_transferencia', methods=['GET', 'POST'])
+@login_required
 def fazer_transferencia():
-    return render_template('criar_conta.html')
+    cursor = mysql.connection.cursor()
+    try:
+        # Buscar as contas associadas ao usuário atual
+        cursor.execute("SELECT id_conta, nome_conta FROM contas WHERE id_usuario = %s", (current_user.id,))
+        contas = cursor.fetchall()
+    except Exception as e:
+        flash(f"Erro ao carregar contas: {str(e)}", "danger")
+        contas = []
+    finally:
+        cursor.close()
+
+    if request.method == 'POST':
+        conta_origem = request.form.get('conta_origem')
+        conta_destino = request.form.get('conta_destino')
+        montante = request.form.get('montante')
+
+        # Validar entrada
+        if not conta_origem or not conta_destino or not montante:
+            flash("Todos os campos são obrigatórios.", "danger")
+            return redirect(url_for('transacao'))
+        
+        if conta_origem == conta_destino:
+            flash("A conta de origem e destino devem ser diferentes.", "danger")
+            return redirect(url_for('transacao'))
+
+        try:
+            montante = float(montante)
+            if montante <= 0:
+                flash("O montante deve ser maior que zero.", "danger")
+                return redirect(url_for('transacao'))
+        except ValueError:
+            flash("Insira um valor numérico válido para o montante.", "danger")
+            return redirect(url_for('transacao'))
+
+        # Realizar a transferência
+        cursor = mysql.connection.cursor()
+        try:
+            # Verificar saldo suficiente na conta de origem
+            cursor.execute("SELECT saldo FROM contas WHERE id_conta = %s", (conta_origem,))
+            saldo_origem = cursor.fetchone()
+            if not saldo_origem or saldo_origem[0] < montante:
+                flash("Saldo insuficiente para realizar a transferência.", "danger")
+                return redirect(url_for('transacao'))
+
+            # Deduzir da conta de origem
+            cursor.execute("UPDATE contas SET saldo = saldo - %s WHERE id_conta = %s", (montante, conta_origem))
+            # Adicionar à conta de destino
+            cursor.execute("UPDATE contas SET saldo = saldo + %s WHERE id_conta = %s", (montante, conta_destino))
+
+            # Registrar a transação
+            cursor.execute("""
+                INSERT INTO transacoes (id_conta_origem, id_conta_destino, valor) 
+                VALUES (%s, %s, %s)
+            """, (conta_origem, conta_destino, montante))
+
+            mysql.connection.commit()
+            flash("Transferência realizada com sucesso!", "success")
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Erro ao realizar transferência: {str(e)}", "danger")
+        finally:
+            cursor.close()
+        return redirect(url_for('transacao'))
+
+    return render_template('transacao.html', contas=contas)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

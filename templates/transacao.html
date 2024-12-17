@@ -1,17 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-    <title>Realizar Transação</title>
+    <meta charset="UTF-8">
+    <title>Fazer Transferência</title>
 </head>
 <body>
-    <h1>Realizar Transação</h1>
+    <h1>Fazer Transferência</h1>
     <form method="POST">
-        <input type="number" name="valor" placeholder="Insira o valor que pretende transferir" required><br>
-        <select name="tipo">
-            <option value="deposito">Depósito</option>
-            <option value="saque">Saque</option>
-        </select><br>
-        <button type="submit">Realizar</button>
+        <label for="conta_origem">Conta de Origem:</label>
+        <select name="conta_origem" id="conta_origem" required>
+            <option value="">Selecione uma conta</option>
+            {% for conta in contas %}
+                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="conta_destino">Conta de Destino:</label>
+        <select name="conta_destino" id="conta_destino" required>
+            <option value="">Selecione uma conta</option>
+            {% for conta in contas %}
+                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="montante">Montante:</label>
+        <input type="number" step="0.01" id="montante" name="montante" required><br><br>
+
+        <button type="submit">Transferir</button>
     </form>
+
+    <a href="{{ url_for('index') }}">Voltar para a página inicial</a>
 </body>
 </html>

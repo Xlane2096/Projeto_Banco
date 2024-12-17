@@ -113,9 +113,6 @@
             font-size: 1.1em;
             border-radius: 5px;
             cursor: pointer;
-            position: relative;
-            bottom: 71px;
-            left: 430px;
             margin: 20px auto;
             display: block;
             transition: background-color 0.3s;
@@ -123,6 +120,79 @@
 
         .logout-button:hover {
             background-color: #c82333;
+        }
+
+        /* Media Queries para Responsividade */
+        @media (max-width: 1200px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .accounts li {
+                flex-direction: column; /* Alinha verticalmente */
+                text-align: center;
+            }
+
+            .actions button {
+                font-size: 1em;
+                padding: 8px 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            .actions form {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .actions button {
+                width: 100%;
+            }
+
+            .logout-button {
+                position: static;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .accounts li {
+                font-size: 0.9em;
+            }
+
+            .transactions table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .logout-button {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
@@ -137,9 +207,9 @@
             <ul>
                 {% for account in user_accounts %}
                 <li>
-                    <strong>{{ account[1] }}</strong>  <!-- Exibe o nome da conta -->
-                    <span>IBAN: {{ account[2] }}</span>            <!-- Exibe o IBAN da conta -->
-                    <span>Saldo: € {{ account[3] }}</span>        <!-- Exibe o saldo da conta -->
+                    <strong>{{ account[1] }}</strong> <!-- Nome da conta -->
+                    <span>IBAN: {{ account[2] }}</span> <!-- IBAN -->
+                    <span>Saldo: € {{ account[3] }}</span> <!-- Saldo -->
                 </li>
                 {% endfor %}
             </ul>
@@ -159,8 +229,8 @@
                 <tbody>
                     {% for transaction in transactions %}
                     <tr>
-                        <td>{{ transaction[0] }}</td> <!-- Exibe a data -->
-                        <td>€ {{ transaction[1] }}</td> <!-- Exibe o valor -->
+                        <td>{{ transaction[0] }}</td>
+                        <td>€ {{ transaction[1] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -182,8 +252,9 @@
             <form action="{{ url_for('criar_conta') }}" method="GET">
                 <button type="submit">Criar Conta</button>
             </form>
-            
         </div>
+
+        <!-- Botão Logout -->
         <form action="{{ url_for('logout') }}" method="POST">
             <button type="submit" class="logout-button">Sair</button>
         </form>

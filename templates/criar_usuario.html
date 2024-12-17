@@ -4,19 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar Usuário</title>
+    <!-- Link para o Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            margin-top: 50px;
+        }
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Criar Usuário</h1>
+
+<div class="container">
+    <h2 class="text-center">Criar Novo Usuário</h2>
+
     <form action="{{ url_for('criar_usuario') }}" method="POST">
-        <label for="nome">Nome:</label>
-        <input type="text" name="nome" required><br>
-        <label for="email">Email:</label>
-        <input type="email" name="email" required><br>
-        <label for="nif">NIF:</label>
-        <input type="nif" name="nif" required><br>
-        <label for="senha">Senha:</label>
-        <input type="password" name="senha" required><br>
-        <button type="submit">Criar Usuário</button>
+        <!-- Nome -->
+        <div class="form-group">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" name="nome" class="form-control" required placeholder="Digite seu nome">
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" class="form-control" required placeholder="Digite seu email">
+        </div>
+
+        <!-- NIF -->
+        <div class="form-group">
+            <label for="nif">NIF</label>
+            <input type="text" id="nif" name="nif" class="form-control" required placeholder="Digite seu NIF">
+        </div>
+
+        <!-- Senha -->
+        <div class="form-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha" class="form-control" required placeholder="Digite sua senha">
+        </div>
+
+        <!-- Botão de Submissão -->
+        <button type="submit" class="btn btn-primary">Criar Usuário</button>
     </form>
+</div>
+
+<!-- Script para o Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

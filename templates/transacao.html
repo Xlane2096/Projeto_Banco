@@ -2,36 +2,62 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Fazer Transferência</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferência</title>
+    <!-- Link para o Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            margin-top: 50px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Fazer Transferência</h1>
+
+<div class="container">
+    <h1 class="text-center">Fazer Transferência</h1>
+    
     <form method="POST">
+        <!-- Conta de Origem -->
+        <div class="form-group">
+            <label for="id_conta_origem">Conta de Origem</label>
+            <select name="id_conta_origem" class="form-control" required>
+                {% for conta in contas %}
+                <option value="{{ conta[0] }}">{{ conta[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
         
-        <label for="conta_origem">Conta de Origem:</label>
-        <select name="conta_origem" id="conta_origem" required>
-            <option value="">Selecione a conta de origem</option>
-            {% for conta in contas %}
-                <option value="{{ conta[0] }}">Conta {{ conta[0] }} - {{ conta[1] }} (Usuário {{ conta[2] }})</option>
-            {% endfor %}
-        </select><br><br>
+        <!-- IBAN da Conta de Destino -->
+        <div class="form-group">
+            <label for="iban_destino">IBAN da Conta de Destino</label>
+            <input type="text" name="iban_destino" class="form-control" required placeholder="Digite o IBAN da conta de destino">
+        </div>
 
-       
-        <label for="conta_destino">Conta de Destino:</label>
-        <select name="conta_destino" id="conta_destino" required>
-            <option value="">Selecione a conta de destino</option>
-            {% for conta in contas %}
-                <option value="{{ conta[0] }}">Conta {{ conta[0] }} - {{ conta[1] }} (Usuário {{ conta[2] }})</option>
-            {% endfor %}
-        </select><br><br>
+        <!-- Valor da Transferência -->
+        <div class="form-group">
+            <label for="valor">Valor a Transferir</label>
+            <input type="text" name="valor" class="form-control" required placeholder="Digite o valor da transferência">
+        </div>
 
-       
-        <label for="montante">Montante:</label>
-        <input type="number" step="0.01" id="montante" name="montante" required><br><br>
-
-        <button type="submit">Transferir</button>
+        <!-- Botão de Submissão -->
+        <button type="submit" class="btn btn-primary">Transferir</button>
     </form>
+</div>
 
-    <a href="{{ url_for('index') }}">Voltar para a página inicial</a>
+<!-- Script para o Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
